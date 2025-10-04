@@ -1,18 +1,52 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, timestamp, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
+export const menuItems = pgTable("menu_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  image: text("image").notNull(),
+  dietary: text("dietary").array(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const menus = pgTable("menus", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  date: timestamp("date").notNull(),
+  itemIds: text("item_ids").array().notNull(),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export const orders = pgTable("orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  menuId: varchar("menu_id").notNull(),
+  customerName: text("customer_name").notNull(),
+  items: text("items").notNull(), // JSON string of {itemId, quantity}[]
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  date: timestamp("date").notNull(),
+  status: text("status").notNull().default("pending"),
+});
+
+export const insertMenuItemSchema = createInsertSchema(menuItems).omit({
+  id: true,
+});
+
+export const insertMenuSchema = createInsertSchema(menus).omit({
+  id: true,
+});
+
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+}).extend({
+  date: z.string(),
+});
+
+export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
+export type MenuItem = typeof menuItems.$inferSelect;
+
+export type InsertMenu = z.infer<typeof insertMenuSchema>;
+export type Menu = typeof menus.$inferSelect;
+
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type Order = typeof orders.$inferSelect;

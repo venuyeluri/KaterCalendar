@@ -1,5 +1,7 @@
-import { type MenuItem, type InsertMenuItem, type Menu, type InsertMenu, type Order, type InsertOrder } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { eq, and, gte, lte } from "drizzle-orm";
+import { db } from "./db";
+import { menuItems, menus, orders } from "@shared/schema";
+import type { MenuItem, InsertMenuItem, Menu, InsertMenu, Order, InsertOrder } from "@shared/schema";
 
 export interface IStorage {
   // Menu Items
@@ -24,110 +26,105 @@ export interface IStorage {
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
 }
 
-export class MemStorage implements IStorage {
-  private menuItems: Map<string, MenuItem>;
-  private menus: Map<string, Menu>;
-  private orders: Map<string, Order>;
-
-  constructor() {
-    this.menuItems = new Map();
-    this.menus = new Map();
-    this.orders = new Map();
-  }
-
+export class DbStorage implements IStorage {
   // Menu Items
-  async createMenuItem(insertItem: InsertMenuItem): Promise<MenuItem> {
-    const id = randomUUID();
-    const item: MenuItem = { ...insertItem, id, dietary: insertItem.dietary ?? null };
-    this.menuItems.set(id, item);
-    return item;
+  async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
+    const [created] = await db.insert(menuItems).values(item).returning();
+    return created;
   }
 
   async getMenuItem(id: string): Promise<MenuItem | undefined> {
-    return this.menuItems.get(id);
+    const [item] = await db.select().from(menuItems).where(eq(menuItems.id, id));
+    return item;
   }
 
   async getAllMenuItems(): Promise<MenuItem[]> {
-    return Array.from(this.menuItems.values());
+    return db.select().from(menuItems);
   }
 
   async updateMenuItem(id: string, updates: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
-    const item = this.menuItems.get(id);
-    if (!item) return undefined;
-    
-    const updated: MenuItem = { ...item, ...updates };
-    this.menuItems.set(id, updated);
+    const [updated] = await db
+      .update(menuItems)
+      .set(updates)
+      .where(eq(menuItems.id, id))
+      .returning();
     return updated;
   }
 
   async deleteMenuItem(id: string): Promise<boolean> {
-    return this.menuItems.delete(id);
+    const result = await db.delete(menuItems).where(eq(menuItems.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // Menus
-  async createMenu(insertMenu: InsertMenu): Promise<Menu> {
-    const id = randomUUID();
-    const menu: Menu = { ...insertMenu, id };
-    this.menus.set(id, menu);
-    return menu;
+  async createMenu(menu: InsertMenu): Promise<Menu> {
+    const [created] = await db.insert(menus).values(menu).returning();
+    return created;
   }
 
   async getMenu(id: string): Promise<Menu | undefined> {
-    return this.menus.get(id);
+    const [menu] = await db.select().from(menus).where(eq(menus.id, id));
+    return menu;
   }
 
   async getMenuByDate(date: Date): Promise<Menu | undefined> {
-    const targetDate = new Date(date);
-    targetDate.setHours(0, 0, 0, 0);
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
     
-    return Array.from(this.menus.values()).find((menu) => {
-      const menuDate = new Date(menu.date);
-      menuDate.setHours(0, 0, 0, 0);
-      return menuDate.getTime() === targetDate.getTime();
-    });
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const [menu] = await db
+      .select()
+      .from(menus)
+      .where(
+        and(
+          gte(menus.date, startOfDay),
+          lte(menus.date, endOfDay)
+        )
+      );
+    return menu;
   }
 
   async getAllMenus(): Promise<Menu[]> {
-    return Array.from(this.menus.values());
+    return db.select().from(menus);
   }
 
   async deleteMenu(id: string): Promise<boolean> {
-    return this.menus.delete(id);
+    const result = await db.delete(menus).where(eq(menus.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // Orders
-  async createOrder(insertOrder: InsertOrder): Promise<Order> {
-    const id = randomUUID();
-    const order: Order = { 
-      ...insertOrder, 
-      id,
-      date: new Date(insertOrder.date),
-      status: insertOrder.status ?? "pending"
-    };
-    this.orders.set(id, order);
-    return order;
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const [created] = await db.insert(orders).values({
+      ...order,
+      date: new Date(order.date),
+    }).returning();
+    return created;
   }
 
   async getOrder(id: string): Promise<Order | undefined> {
-    return this.orders.get(id);
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order;
   }
 
   async getOrdersByMenuId(menuId: string): Promise<Order[]> {
-    return Array.from(this.orders.values()).filter((order) => order.menuId === menuId);
+    return db.select().from(orders).where(eq(orders.menuId, menuId));
   }
 
   async getAllOrders(): Promise<Order[]> {
-    return Array.from(this.orders.values());
+    return db.select().from(orders);
   }
 
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
-    const order = this.orders.get(id);
-    if (!order) return undefined;
-    
-    const updated: Order = { ...order, status };
-    this.orders.set(id, updated);
+    const [updated] = await db
+      .update(orders)
+      .set({ status })
+      .where(eq(orders.id, id))
+      .returning();
     return updated;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DbStorage();

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { getMenuItems, createMenu } from "@/lib/api";
@@ -16,6 +17,7 @@ export default function PublishMenuPage() {
   const [, navigate] = useLocation();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [maxOrders, setMaxOrders] = useState<string>("50");
   const { toast } = useToast();
 
   const { data: menuItems = [] } = useQuery<MenuItem[]>({
@@ -24,8 +26,8 @@ export default function PublishMenuPage() {
   });
 
   const publishMenuMutation = useMutation({
-    mutationFn: ({ date, itemIds }: { date: Date; itemIds: string[] }) => 
-      createMenu(date, itemIds),
+    mutationFn: ({ date, itemIds, maxOrders }: { date: Date; itemIds: string[]; maxOrders: number }) => 
+      createMenu(date, itemIds, maxOrders),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menus"] });
       toast({
@@ -72,9 +74,20 @@ export default function PublishMenuPage() {
       return;
     }
 
+    const maxOrdersNum = parseInt(maxOrders);
+    if (isNaN(maxOrdersNum) || maxOrdersNum <= 0) {
+      toast({
+        title: "Invalid order limit",
+        description: "Please enter a valid number of maximum orders.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     publishMenuMutation.mutate({
       date: selectedDate,
       itemIds: Array.from(selectedItems),
+      maxOrders: maxOrdersNum,
     });
   };
 
@@ -177,6 +190,24 @@ export default function PublishMenuPage() {
                 <div>
                   <Label className="text-sm text-muted-foreground">Items Selected</Label>
                   <p className="font-medium">{selectedItems.size} items</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="max-orders" className="text-sm font-medium mb-2 block">
+                    Maximum Orders
+                  </Label>
+                  <Input
+                    id="max-orders"
+                    type="number"
+                    min="1"
+                    value={maxOrders}
+                    onChange={(e) => setMaxOrders(e.target.value)}
+                    placeholder="50"
+                    data-testid="input-max-orders"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    How many total orders you can handle for this date
+                  </p>
                 </div>
               </div>
 

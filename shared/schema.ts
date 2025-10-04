@@ -16,6 +16,7 @@ export const menus = pgTable("menus", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   date: timestamp("date").notNull(),
   itemIds: text("item_ids").array().notNull(),
+  maxOrders: integer("max_orders").notNull().default(50),
 });
 
 export const orders = pgTable("orders", {
@@ -34,6 +35,8 @@ export const insertMenuItemSchema = createInsertSchema(menuItems).omit({
 
 export const insertMenuSchema = createInsertSchema(menus).omit({
   id: true,
+}).extend({
+  date: z.string().transform((val) => new Date(val)),
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({

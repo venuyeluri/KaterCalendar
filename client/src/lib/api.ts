@@ -67,13 +67,14 @@ export async function createMenuItem(item: Omit<MenuItem, "id">): Promise<MenuIt
   return response.json();
 }
 
-export async function createMenu(date: Date, itemIds: string[]): Promise<Menu> {
+export async function createMenu(date: Date, itemIds: string[], maxOrders: number): Promise<Menu> {
   const response = await fetch("/api/menus", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       date: date.toISOString(),
       itemIds,
+      maxOrders,
     }),
   });
   if (!response.ok) throw new Error("Failed to create menu");

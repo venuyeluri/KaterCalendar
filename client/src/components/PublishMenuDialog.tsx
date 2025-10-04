@@ -150,7 +150,10 @@ export function PublishMenuDialog({
                       <div className="flex items-start gap-3">
                         <Checkbox
                           checked={selectedItems.has(item.id)}
-                          onCheckedChange={() => handleItemToggle(item.id)}
+                          onCheckedChange={(checked) => {
+                            handleItemToggle(item.id);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           data-testid={`checkbox-item-${item.id}`}
                         />
                         <div className="flex-1">

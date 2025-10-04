@@ -1,70 +1,51 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { DashboardStats } from "@/components/DashboardStats";
 import { OrdersTable } from "@/components/OrdersTable";
 import { CalendarView } from "@/components/CalendarView";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-
-const mockOrders = [
-  {
-    id: "1",
-    customerName: "John Smith",
-    items: [
-      { name: "Grilled Salmon", quantity: 2 },
-      { name: "Caesar Salad", quantity: 1 },
-    ],
-    total: 62.97,
-    date: "Oct 10, 2025",
-    status: "confirmed" as const,
-  },
-  {
-    id: "2",
-    customerName: "Sarah Johnson",
-    items: [
-      { name: "Pasta Primavera", quantity: 3 },
-    ],
-    total: 56.97,
-    date: "Oct 10, 2025",
-    status: "pending" as const,
-  },
-  {
-    id: "3",
-    customerName: "Mike Davis",
-    items: [
-      { name: "Chocolate Lava Cake", quantity: 4 },
-      { name: "Grilled Salmon", quantity: 1 },
-    ],
-    total: 60.95,
-    date: "Oct 9, 2025",
-    status: "completed" as const,
-  },
-  {
-    id: "4",
-    customerName: "Emily Brown",
-    items: [
-      { name: "Caesar Salad", quantity: 2 },
-      { name: "Pasta Primavera", quantity: 2 },
-    ],
-    total: 63.96,
-    date: "Oct 10, 2025",
-    status: "confirmed" as const,
-  },
-];
+import { getOrders, getMenus } from "@/lib/api";
+import { Link } from "wouter";
+import type { Order as OrderType } from "@shared/schema";
 
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const today = new Date();
-  const menuDates = [
-    new Date(today.getFullYear(), today.getMonth(), 15),
-    new Date(today.getFullYear(), today.getMonth(), 18),
-    new Date(today.getFullYear(), today.getMonth(), 22),
-    new Date(today.getFullYear(), today.getMonth(), 25),
-  ];
+  const { data: orders = [] } = useQuery<OrderType[]>({
+    queryKey: ["/api/orders"],
+    queryFn: getOrders,
+  });
 
-  const handlePublishMenu = () => {
-    console.log("Publish new menu clicked");
-  };
+  const { data: menus = [] } = useQuery({
+    queryKey: ["/api/menus"],
+    queryFn: getMenus,
+  });
+
+  const menuDates = menus.map((menu: any) => new Date(menu.date));
+
+  const formattedOrders = orders.map((order) => {
+    const items = JSON.parse(order.items);
+    return {
+      id: order.id,
+      customerName: order.customerName,
+      items: items.map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity,
+      })),
+      total: parseFloat(order.total),
+      date: new Date(order.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      status: order.status as "pending" | "confirmed" | "completed",
+    };
+  });
+
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.total), 0);
+  const totalItems = orders.reduce((sum, order) => {
+    const items = JSON.parse(order.items);
+    return sum + items.reduce((itemSum: number, item: any) => itemSum + item.quantity, 0);
+  }, 0);
+  const upcomingMenus = menus.filter((menu: any) => new Date(menu.date) >= new Date()).length;
 
   return (
     <div className="min-h-screen py-12">
@@ -76,18 +57,20 @@ export default function DashboardPage() {
               Manage your menus and track orders
             </p>
           </div>
-          <Button onClick={handlePublishMenu} data-testid="button-publish-menu">
-            <Plus className="mr-2 h-5 w-5" />
-            Publish New Menu
-          </Button>
+          <Link href="/publish-menu">
+            <Button data-testid="button-publish-menu">
+              <Plus className="mr-2 h-5 w-5" />
+              Publish New Menu
+            </Button>
+          </Link>
         </div>
 
         <div className="mb-12">
           <DashboardStats
-            totalOrders={48}
-            totalRevenue={1247.52}
-            totalItems={156}
-            upcomingMenus={5}
+            totalOrders={totalOrders}
+            totalRevenue={totalRevenue}
+            totalItems={totalItems}
+            upcomingMenus={upcomingMenus}
           />
         </div>
 
@@ -104,14 +87,16 @@ export default function DashboardPage() {
           <div className="bg-card border border-card-border rounded-xl p-6">
             <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
             <div className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                data-testid="button-create-menu"
-              >
-                <Plus className="mr-2 h-5 w-5" />
-                Create Menu
-              </Button>
+              <Link href="/publish-menu">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  data-testid="button-create-menu"
+                >
+                  <Plus className="mr-2 h-5 w-5" />
+                  Create Menu
+                </Button>
+              </Link>
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
@@ -119,13 +104,15 @@ export default function DashboardPage() {
               >
                 View All Orders
               </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                data-testid="button-manage-items"
-              >
-                Manage Menu Items
-              </Button>
+              <Link href="/manage-items">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  data-testid="button-manage-items"
+                >
+                  Manage Menu Items
+                </Button>
+              </Link>
             </div>
 
             {selectedDate && (
@@ -145,7 +132,7 @@ export default function DashboardPage() {
 
         <div>
           <h2 className="text-2xl font-semibold mb-6">Recent Orders</h2>
-          <OrdersTable orders={mockOrders} />
+          <OrdersTable orders={formattedOrders} />
         </div>
       </div>
     </div>

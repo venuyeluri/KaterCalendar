@@ -1,60 +1,68 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { CalendarView } from "@/components/CalendarView";
 import { MenuCard } from "@/components/MenuCard";
 import { OrderSummary } from "@/components/OrderSummary";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import salmonImage from "@assets/generated_images/Grilled_salmon_menu_item_6b384824.png";
-import saladImage from "@assets/generated_images/Caesar_salad_menu_item_2ee7317d.png";
-import pastaImage from "@assets/generated_images/Pasta_primavera_menu_item_a3ece18f.png";
-import dessertImage from "@assets/generated_images/Chocolate_lava_cake_dessert_f601292a.png";
-
-const mockMenuItems = [
-  {
-    id: "salmon-1",
-    name: "Grilled Salmon",
-    description: "Fresh Atlantic salmon with roasted vegetables and lemon butter sauce",
-    price: 24.99,
-    image: salmonImage,
-    dietary: ["Gluten-free"],
-  },
-  {
-    id: "salad-1",
-    name: "Caesar Salad",
-    description: "Classic Caesar with crispy croutons, parmesan, and homemade dressing",
-    price: 12.99,
-    image: saladImage,
-    dietary: ["Vegetarian"],
-  },
-  {
-    id: "pasta-1",
-    name: "Pasta Primavera",
-    description: "Fresh vegetables tossed with pasta in a light olive oil sauce",
-    price: 18.99,
-    image: pastaImage,
-    dietary: ["Vegetarian", "Vegan"],
-  },
-  {
-    id: "dessert-1",
-    name: "Chocolate Lava Cake",
-    description: "Warm chocolate cake with molten center, served with vanilla ice cream",
-    price: 8.99,
-    image: dessertImage,
-    dietary: ["Vegetarian"],
-  },
-];
+import { getMenuItems, getMenus, getMenuByDate, createOrder } from "@/lib/api";
+import { queryClient } from "@/lib/queryClient";
+import type { MenuItem } from "@shared/schema";
 
 export default function CustomerOrderPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedMenu, setSelectedMenu] = useState<{ id: string; items: MenuItem[] } | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [customerName, setCustomerName] = useState("");
   const { toast } = useToast();
 
-  const today = new Date();
-  const menuDates = [
-    new Date(today.getFullYear(), today.getMonth(), 15),
-    new Date(today.getFullYear(), today.getMonth(), 18),
-    new Date(today.getFullYear(), today.getMonth(), 22),
-    new Date(today.getFullYear(), today.getMonth(), 25),
-  ];
+  const { data: allMenuItems = [] } = useQuery<MenuItem[]>({
+    queryKey: ["/api/menu-items"],
+    queryFn: getMenuItems,
+  });
+
+  const { data: menus = [] } = useQuery({
+    queryKey: ["/api/menus"],
+    queryFn: getMenus,
+  });
+
+  const createOrderMutation = useMutation({
+    mutationFn: createOrder,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({
+        title: "Order placed successfully!",
+        description: `Your order for ${selectedDate?.toLocaleDateString()} has been received.`,
+      });
+      setQuantities({});
+      setCustomerName("");
+    },
+    onError: () => {
+      toast({
+        title: "Order failed",
+        description: "There was an error placing your order. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const menuDates = menus.map((menu: any) => new Date(menu.date));
+
+  const handleDateSelect = async (date: Date) => {
+    setSelectedDate(date);
+    setQuantities({});
+    
+    const menu = await getMenuByDate(date);
+    if (menu) {
+      const menuItems = allMenuItems.filter((item: MenuItem) => 
+        menu.itemIds?.includes(item.id)
+      );
+      setSelectedMenu({ id: menu.id, items: menuItems });
+    } else {
+      setSelectedMenu(null);
+    }
+  };
 
   const handleQuantityChange = (id: string, quantity: number) => {
     setQuantities((prev) => ({
@@ -64,11 +72,31 @@ export default function CustomerOrderPage() {
   };
 
   const handleSubmitOrder = () => {
-    const orderItems = mockMenuItems
+    if (!selectedMenu || !selectedDate) {
+      toast({
+        title: "No menu selected",
+        description: "Please select a date with an available menu.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!customerName.trim()) {
+      toast({
+        title: "Name required",
+        description: "Please enter your name to place an order.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const orderItems = selectedMenu.items
       .filter((item) => quantities[item.id] > 0)
       .map((item) => ({
-        ...item,
+        itemId: item.id,
+        name: item.name,
         quantity: quantities[item.id],
+        price: parseFloat(item.price),
       }));
 
     if (orderItems.length === 0) {
@@ -80,23 +108,25 @@ export default function CustomerOrderPage() {
       return;
     }
 
-    console.log("Order submitted:", orderItems);
-    toast({
-      title: "Order placed successfully!",
-      description: `Your order for ${selectedDate?.toLocaleDateString()} has been received.`,
+    const total = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    createOrderMutation.mutate({
+      menuId: selectedMenu.id,
+      customerName: customerName.trim(),
+      items: orderItems,
+      total,
+      date: selectedDate.toISOString(),
     });
-    
-    setQuantities({});
   };
 
-  const orderItems = mockMenuItems
+  const orderItems = selectedMenu?.items
     .filter((item) => quantities[item.id] > 0)
     .map((item) => ({
       id: item.id,
       name: item.name,
       quantity: quantities[item.id],
-      price: item.price,
-    }));
+      price: parseFloat(item.price),
+    })) || [];
 
   return (
     <div className="min-h-screen py-12">
@@ -112,32 +142,55 @@ export default function CustomerOrderPage() {
           <div className="lg:col-span-2">
             <CalendarView
               menuDates={menuDates}
-              onDateSelect={(date) => {
-                setSelectedDate(date);
-                console.log("Selected date:", date);
-              }}
+              onDateSelect={handleDateSelect}
             />
           </div>
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-card border border-card-border rounded-xl p-6">
+              <Label htmlFor="customer-name" className="text-sm font-medium mb-2 block">
+                Your Name
+              </Label>
+              <Input
+                id="customer-name"
+                type="text"
+                placeholder="Enter your name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                data-testid="input-customer-name"
+              />
+            </div>
             <OrderSummary items={orderItems} onSubmit={handleSubmitOrder} />
           </div>
         </div>
 
-        {selectedDate && (
+        {selectedDate && selectedMenu && selectedMenu.items.length > 0 && (
           <div>
             <h2 className="text-2xl font-semibold mb-6">
               Menu for {selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockMenuItems.map((item) => (
+              {selectedMenu.items.map((item) => (
                 <MenuCard
                   key={item.id}
-                  {...item}
+                  id={item.id}
+                  name={item.name}
+                  description={item.description}
+                  price={parseFloat(item.price)}
+                  image={item.image}
+                  dietary={item.dietary || []}
                   quantity={quantities[item.id] || 0}
                   onQuantityChange={handleQuantityChange}
                 />
               ))}
             </div>
+          </div>
+        )}
+
+        {selectedDate && (!selectedMenu || selectedMenu.items.length === 0) && (
+          <div className="text-center py-16">
+            <p className="text-lg text-muted-foreground">
+              No menu available for this date
+            </p>
           </div>
         )}
 

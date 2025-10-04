@@ -9,6 +9,8 @@ import { ChefHat } from "lucide-react";
 import HomePage from "@/pages/HomePage";
 import CustomerOrderPage from "@/pages/CustomerOrderPage";
 import DashboardPage from "@/pages/DashboardPage";
+import PublishMenuPage from "@/pages/PublishMenuPage";
+import ManageItemsPage from "@/pages/ManageItemsPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -17,6 +19,8 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/order" component={CustomerOrderPage} />
       <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/publish-menu" component={PublishMenuPage} />
+      <Route path="/manage-items" component={ManageItemsPage} />
       <Route component={NotFound} />
     </Switch>
   );

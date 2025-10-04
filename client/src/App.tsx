@@ -35,23 +35,17 @@ function App() {
             <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
               <div className="container mx-auto px-4 md:px-6 lg:px-8">
                 <div className="flex h-16 items-center justify-between">
-                  <Link href="/">
-                    <a className="flex items-center gap-2 hover-elevate active-elevate-2 px-3 py-2 rounded-lg" data-testid="link-home">
-                      <ChefHat className="h-6 w-6 text-primary" />
-                      <span className="font-bold text-xl">CaterCalendar</span>
-                    </a>
+                  <Link href="/" className="flex items-center gap-2 hover-elevate active-elevate-2 px-3 py-2 rounded-lg" data-testid="link-home">
+                    <ChefHat className="h-6 w-6 text-primary" />
+                    <span className="font-bold text-xl">CaterCalendar</span>
                   </Link>
 
                   <nav className="hidden md:flex items-center gap-6">
-                    <Link href="/order">
-                      <a className="text-sm font-medium hover:text-primary transition-colors" data-testid="link-order">
-                        Browse Menus
-                      </a>
+                    <Link href="/order" className="text-sm font-medium hover:text-primary transition-colors" data-testid="link-order">
+                      Browse Menus
                     </Link>
-                    <Link href="/dashboard">
-                      <a className="text-sm font-medium hover:text-primary transition-colors" data-testid="link-dashboard">
-                        Dashboard
-                      </a>
+                    <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors" data-testid="link-dashboard">
+                      Dashboard
                     </Link>
                   </nav>
 
@@ -81,13 +75,13 @@ function App() {
                     <h3 className="font-semibold mb-4">Quick Links</h3>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                       <li>
-                        <Link href="/order">
-                          <a className="hover:text-primary transition-colors">Browse Menus</a>
+                        <Link href="/order" className="hover:text-primary transition-colors">
+                          Browse Menus
                         </Link>
                       </li>
                       <li>
-                        <Link href="/dashboard">
-                          <a className="hover:text-primary transition-colors">Dashboard</a>
+                        <Link href="/dashboard" className="hover:text-primary transition-colors">
+                          Dashboard
                         </Link>
                       </li>
                     </ul>

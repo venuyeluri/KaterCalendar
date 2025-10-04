@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardStats } from "@/components/DashboardStats";
 import { OrdersTable } from "@/components/OrdersTable";
 import { CalendarView } from "@/components/CalendarView";
+import { PublishMenuDialog } from "@/components/PublishMenuDialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { getOrders, getMenus } from "@/lib/api";
@@ -11,6 +12,7 @@ import type { Order as OrderType } from "@shared/schema";
 
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: orders = [] } = useQuery<OrderType[]>({
     queryKey: ["/api/orders"],
@@ -80,7 +82,7 @@ export default function DashboardPage() {
               menuDates={menuDates}
               onDateSelect={(date) => {
                 setSelectedDate(date);
-                console.log("Selected date:", date);
+                setDialogOpen(true);
               }}
             />
           </div>
@@ -134,6 +136,12 @@ export default function DashboardPage() {
           <h2 className="text-2xl font-semibold mb-6">Recent Orders</h2>
           <OrdersTable orders={formattedOrders} />
         </div>
+
+        <PublishMenuDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          date={selectedDate}
+        />
       </div>
     </div>
   );

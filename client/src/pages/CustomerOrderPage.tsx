@@ -3,11 +3,13 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { CalendarView } from "@/components/CalendarView";
 import { MenuCard } from "@/components/MenuCard";
 import { OrderSummary } from "@/components/OrderSummary";
+import { EnvironmentBanner } from "@/components/EnvironmentBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getMenuItems, getMenus, getMenuByDate, createOrder } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
+import { ENV_CONFIG } from "@/lib/env";
 import type { MenuItem } from "@shared/schema";
 
 export default function CustomerOrderPage() {
@@ -131,6 +133,12 @@ export default function CustomerOrderPage() {
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
+        <EnvironmentBanner 
+          replName={ENV_CONFIG.replName}
+          branchName={ENV_CONFIG.branchName}
+          repoName={ENV_CONFIG.repoName}
+        />
+
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">Order Your Meal</h1>
           <p className="text-lg text-muted-foreground">

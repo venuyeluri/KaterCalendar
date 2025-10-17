@@ -10,6 +10,38 @@ The application follows a food service and scheduling hybrid approach, drawing i
 
 Preferred communication style: Simple, everyday language.
 
+## Environment Management
+
+The application includes environment identification banners on both the customer order page and caterer dashboard. These banners display:
+- **Repl Name**: The name of the application instance (e.g., "CaterCalendar")
+- **Repository**: The repository identifier (e.g., "venuyeluri/workspace")
+- **Branch Name**: The current branch being used (e.g., "StagingCC")
+
+**Implementation:**
+- Shared `EnvironmentBanner` component in `client/src/components/EnvironmentBanner.tsx`
+- Centralized configuration in `client/src/lib/env.ts`
+- Uses Vite environment variables for easy deployment configuration
+- Includes accessibility features (ARIA labels and status role)
+
+**How to Update for Different Environments:**
+When forking the Repl for different environments (DEV, Beta, UAT, PROD), set the following environment variables in your Repl's Secrets:
+
+- `VITE_REPL_NAME` - e.g., "CaterCalendar-PROD", "CaterCalendar-Beta", "CaterCalendar-UAT"
+- `VITE_BRANCH_NAME` - e.g., "main", "staging", "beta", "uat"
+- `VITE_REPO_NAME` - e.g., "venuyeluri/catercalendar-prod"
+
+Alternatively, you can update the defaults in `client/src/lib/env.ts`:
+
+```typescript
+export const ENV_CONFIG = {
+  replName: import.meta.env.VITE_REPL_NAME || "CaterCalendar-DEV",
+  branchName: import.meta.env.VITE_BRANCH_NAME || "main",
+  repoName: import.meta.env.VITE_REPO_NAME || "venuyeluri/workspace",
+} as const;
+```
+
+This provides instant visual confirmation of which environment you're working in, preventing accidental changes to production.
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -34,6 +66,7 @@ Preferred communication style: Simple, everyday language.
 - Order summary with real-time total calculation
 - Dashboard with statistics and order management
 - Theme toggle for light/dark mode
+- Environment banner displaying Repl name, repository, and branch information (for multi-environment support)
 
 ### Backend Architecture
 

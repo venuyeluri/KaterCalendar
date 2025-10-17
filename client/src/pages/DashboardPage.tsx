@@ -3,10 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardStats } from "@/components/DashboardStats";
 import { OrdersTable } from "@/components/OrdersTable";
 import { CalendarView } from "@/components/CalendarView";
+import { EnvironmentBanner } from "@/components/EnvironmentBanner";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { getOrders, getMenus } from "@/lib/api";
 import { Link } from "wouter";
+import { ENV_CONFIG } from "@/lib/env";
 import type { Order as OrderType } from "@shared/schema";
 
 export default function DashboardPage() {
@@ -50,6 +52,12 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
+        <EnvironmentBanner 
+          replName={ENV_CONFIG.replName}
+          branchName={ENV_CONFIG.branchName}
+          repoName={ENV_CONFIG.repoName}
+        />
+
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2">Caterer Dashboard</h1>

@@ -10,6 +10,24 @@ The application follows a food service and scheduling hybrid approach, drawing i
 
 Preferred communication style: Simple, everyday language.
 
+## Environment Management
+
+The application includes environment identification banners on both the customer order page and caterer dashboard. These banners display:
+- **Repl Name**: The name of the application instance (e.g., "CaterCalendar")
+- **Repository**: The repository identifier (e.g., "venuyeluri/workspace")
+- **Branch Name**: The current branch being used (e.g., "StagingCC")
+
+**How to Update for Different Environments:**
+When forking the Repl for different environments (DEV, Beta, UAT, PROD), update the following variables in both `CustomerOrderPage.tsx` and `DashboardPage.tsx`:
+
+```typescript
+const replName = "CaterCalendar";        // Update to "CaterCalendar-PROD", "CaterCalendar-Beta", etc.
+const branchName = "StagingCC";           // Update to current branch name
+const repoName = "venuyeluri/workspace";  // Update to match your repository
+```
+
+This provides instant visual confirmation of which environment you're working in, preventing accidental changes to production.
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -34,6 +52,7 @@ Preferred communication style: Simple, everyday language.
 - Order summary with real-time total calculation
 - Dashboard with statistics and order management
 - Theme toggle for light/dark mode
+- Environment banner displaying Repl name, repository, and branch information (for multi-environment support)
 
 ### Backend Architecture
 

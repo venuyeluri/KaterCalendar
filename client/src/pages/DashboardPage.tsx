@@ -12,6 +12,11 @@ import type { Order as OrderType } from "@shared/schema";
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
+  // Environment info - can be updated for different deployments
+  const replName = "CaterCalendar";
+  const branchName = "StagingCC";
+  const repoName = "venuyeluri/workspace";
+
   const { data: orders = [] } = useQuery<OrderType[]>({
     queryKey: ["/api/orders"],
     queryFn: getOrders,
@@ -50,6 +55,23 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
+        {/* Environment Banner */}
+        <div className="mb-8 p-6 bg-primary/10 border-2 border-primary rounded-lg" data-testid="environment-banner">
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl md:text-4xl font-bold text-primary">
+              {replName}
+            </h2>
+            <div className="text-xl md:text-2xl font-semibold">
+              <span className="text-foreground">Repository: </span>
+              <span className="text-primary">{repoName}</span>
+            </div>
+            <div className="text-xl md:text-2xl font-semibold">
+              <span className="text-foreground">Branch: </span>
+              <span className="text-primary">{branchName}</span>
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2">Caterer Dashboard</h1>

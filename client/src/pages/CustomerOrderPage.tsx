@@ -17,6 +17,11 @@ export default function CustomerOrderPage() {
   const [customerName, setCustomerName] = useState("");
   const { toast } = useToast();
 
+  // Environment info - can be updated for different deployments
+  const replName = "CaterCalendar";
+  const branchName = "StagingCC";
+  const repoName = "venuyeluri/workspace";
+
   const { data: allMenuItems = [] } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu-items"],
     queryFn: getMenuItems,
@@ -131,6 +136,23 @@ export default function CustomerOrderPage() {
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
+        {/* Environment Banner */}
+        <div className="mb-8 p-6 bg-primary/10 border-2 border-primary rounded-lg" data-testid="environment-banner">
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl md:text-4xl font-bold text-primary">
+              {replName}
+            </h2>
+            <div className="text-xl md:text-2xl font-semibold">
+              <span className="text-foreground">Repository: </span>
+              <span className="text-primary">{repoName}</span>
+            </div>
+            <div className="text-xl md:text-2xl font-semibold">
+              <span className="text-foreground">Branch: </span>
+              <span className="text-primary">{branchName}</span>
+            </div>
+          </div>
+        </div>
+
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">Order Your Meal</h1>
           <p className="text-lg text-muted-foreground">

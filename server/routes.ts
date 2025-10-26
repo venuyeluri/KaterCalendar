@@ -167,7 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const envInfo = {
         replSlug: process.env.REPL_SLUG || 'unknown',
         replOwner: process.env.REPL_OWNER || 'unknown',
-        gitBranch: process.env.GIT_BRANCH || 'main',
+        gitBranch: process.env.VITE_BRANCH_NAME || 'main',
         databaseUrl: process.env.DATABASE_URL ? 
           process.env.DATABASE_URL.split('@')[1] || 'configured' : 
           'not configured',

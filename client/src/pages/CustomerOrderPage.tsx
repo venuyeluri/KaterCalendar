@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarView } from "@/components/CalendarView";
 import { MenuOrderDialog } from "@/components/MenuOrderDialog";
+import { EnvironmentInfo } from "@/components/EnvironmentInfo";
 import { getMenuItems, getMenus, getMenuByDate } from "@/lib/api";
 import type { MenuItem } from "@shared/schema";
 
@@ -47,6 +48,10 @@ export default function CustomerOrderPage() {
           <p className="text-lg text-muted-foreground">
             Select a date from the calendar to view available menu items and place your order
           </p>
+        </div>
+
+        <div className="mb-8 max-w-md">
+          <EnvironmentInfo />
         </div>
 
         <div className="max-w-4xl mx-auto">
